@@ -2,12 +2,16 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * In der Main Klasse wird die GUI für die To-do-Liste erstellt.
  * */
 public class Main {
     protected JFrame mainFrame;
+    private JPanel panel;
 
     /**
      * Erstellt die GUI für die To-do-Liste.
@@ -23,15 +27,22 @@ public class Main {
         JPanel controlPanel = new JPanel(new FlowLayout());
         mainFrame.add(controlPanel);
 
-        JPanel panel = new JPanel();
+        panel = new JPanel();
+        // Erstellung, gestaltung und Hinzufügung des Layouts zum Panel
         GridLayout gridLayout = new GridLayout(0,5);
         gridLayout.setHgap(20);
         gridLayout.setVgap(20);
         panel.setLayout(gridLayout);
+
         createJMenuBar();
 
+        Map<String, Map<String, Boolean>> data = new DataHandler().getData();
+        List<String> keysList = new ArrayList<>(data.keySet()); // Liste der Namen der To-do-Listen
+
         // Erstellt die To-do-Listen mit den Elementen
-        new CreateTaskLabel(panel);
+        for (String name : keysList) {
+            new CreateTaskLabel(panel).createJLabel(name);
+        }
 
         controlPanel.add(panel);
 
@@ -53,9 +64,8 @@ public class Main {
         JMenuItem close = new JMenuItem("Schließen");
 
         // ActionListener für die Menüitems
-        // todo weitermachen: Erstellung und Speicherung von einer neuen To-do-Liste
-        //close.addActionListener(_ -> System.exit(0));
-        close.addActionListener(_ -> System.out.println(new DataHandler().getData()));
+        newList.addActionListener(_ -> new NewTodo(panel));
+        close.addActionListener(_ -> System.exit(0));
 
         // Fügt die Menüitems dem Dateiitem
         datei.add(newList);

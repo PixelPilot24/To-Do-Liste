@@ -1,6 +1,7 @@
 package org.example;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -23,21 +24,13 @@ public class CreateTaskLabel {
     private final JPanel panel;
 
     /**
-     * Lädt die übergebenen Daten und erstellt im Anschluss die GUI der To-do-Liste.
+     * Lädt die übergebenen Daten.
      *
      * @param _panel Das {@code JPanel} vom Hauptfenster zum Hinzufügen der To-do-Listen.
      * */
     public CreateTaskLabel(JPanel _panel) {
-        DataHandler dataHandler = new DataHandler();
-
-        data = dataHandler.getData();
+        data = new DataHandler().getData();
         panel = _panel;
-        List<String> keysList = new ArrayList<>(data.keySet());
-
-        // Erstellt die To-do-Listen mit den Elementen
-        for (String name : keysList) {
-            createJLabel(name);
-        }
     }
 
     /**
@@ -45,7 +38,7 @@ public class CreateTaskLabel {
      *
      * @param name Der Name von der To-do-Liste.
      * */
-    private void createJLabel(String name) {
+    public void createJLabel(String name) {
         Font font = new Font("Serif", Font.BOLD, 20);
 
         // Erstellt die Überschrift der Liste
@@ -110,7 +103,9 @@ public class CreateTaskLabel {
         for (int i = 0; i < keysList.size(); i++) {
             String itemName = keysList.get(i);
             boolean itemValue = data.get(name).get(itemName);
+            // Erstellt und gestaltet die Aufgabe
             JLabel itemLabel = new JLabel("- " + itemName);
+            itemLabel.setBorder(new EmptyBorder(0,10,0,10));
             itemLabel.setFont(new Font("Serif", Font.PLAIN, 16));
 
             // Wenn das Element als erledigt markiert ist, dann wird es durchgestrichen
@@ -133,6 +128,14 @@ public class CreateTaskLabel {
             }
 
             container.add(itemLabel);
+        }
+
+        // Wenn es keine Aufgaben gibt, dann wird ein Label erstellt und dem Container hinzugefügt,
+        // damit das Aufgaben-Panel nicht leer ist
+        if (keysList.isEmpty()) {
+            JLabel emptyLabel = new JLabel();
+            emptyLabel.setPreferredSize(new Dimension(100,22));
+            container.add(emptyLabel);
         }
 
         return container;
@@ -158,6 +161,11 @@ public class CreateTaskLabel {
         }
 
         percent = finished / data.get(name).size() * 100; // Berechnung der Prozentzahl
+
+        if (Double.isNaN(percent)) {
+            // Wenn es keine Aufgaben gibt, dann soll 0 % angezeigt werden
+            percent = 0;
+        }
 
         return decimalFormat.format(percent) + " %";
     }
