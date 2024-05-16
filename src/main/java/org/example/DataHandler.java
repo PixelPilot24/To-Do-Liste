@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,7 +18,7 @@ import java.util.Map;
  * */
 public class DataHandler {
     private final ObjectMapper objectMapper;
-    private Map<String, Map<String, Boolean>> jsonData = new HashMap<>();
+    private Map<String, Map<String, List<Object>>> jsonData = new HashMap<>();
 
     public DataHandler() {
         objectMapper = new ObjectMapper();
@@ -29,7 +30,7 @@ public class DataHandler {
      *
      * @param data Die {@code Map} mit den Daten die gespeichert werden sollen.
      * */
-    public void saveDataToJson(Map<String, Map<String, Boolean>> data) {
+    public void saveDataToJson(Map<String, Map<String, List<Object>>> data) {
         try {
             objectMapper.writeValue(new File("data.json"), data);
             jsonData = data;
@@ -47,23 +48,36 @@ public class DataHandler {
      * Lädt die JSON Datei und formatiert diese in eine {@code Map}.
      * */
     public void loadDataFromJson() {
-        try {
-            byte[] bytes = Files.readAllBytes(Path.of("data.json"));
-            jsonData = objectMapper.readValue(bytes, new TypeReference<HashMap<String, Map<String, Boolean>>>() {});
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(
-                    new JOptionPane(),
-                    "Fehler beim Laden der Daten aus JSON:\n" + e.getMessage(),
-                    "Fehler",
-                    JOptionPane.ERROR_MESSAGE
-            );
+        Path path = Path.of("data.json");
+        boolean fileExists = path.toFile().exists();
+
+        // Falls die Datei nicht existiert, wird eine neue erstellt
+        if (fileExists) {
+            try {
+                byte[] bytes = Files.readAllBytes(path);
+                jsonData = objectMapper.readValue(bytes, new TypeReference<HashMap<String, Map<String, List<Object>>>>() {
+                });
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(
+                        new JOptionPane(),
+                        "Fehler beim Laden der Daten aus JSON:\n" + e.getMessage(),
+                        "Fehler",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        } else {
+            try {
+                objectMapper.writeValue(new File("data.json"), jsonData);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     /**
      * Wenn die jsonData leer ist, wird die JSON Datei geladen und im Anschluss ausgegeben.
      * */
-    public Map<String, Map<String, Boolean>> getData() {
+    public Map<String, Map<String, List<Object>>> getData() {
         if (jsonData.isEmpty()) {
             loadDataFromJson();
         }

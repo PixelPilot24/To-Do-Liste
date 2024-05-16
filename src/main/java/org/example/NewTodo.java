@@ -3,13 +3,16 @@ package org.example;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * In dieser Klasse wird die GUI für die Erstellung einer neuen Liste erstellt mit den Funktionen.
  * */
 public class NewTodo {
+    private final JFrame mainWindowFrame;
     private JFrame mainFrame;
     private JPanel tasksPanel;
     private final JPanel getTasksPanel;
@@ -21,7 +24,8 @@ public class NewTodo {
      *
      * @param panel Das {@code JPanel} vom Hauptfenster für das Hinzufügen der neuen Liste.
      * */
-    public NewTodo(JPanel panel) {
+    public NewTodo(JPanel panel, JFrame frame) {
+        mainWindowFrame = frame;
         getTasksPanel = panel;
         initWindow();
     }
@@ -143,7 +147,7 @@ public class NewTodo {
         saveButton.addActionListener(_ -> {
             // Lädt die JSON Datei
             DataHandler dataHandler = new DataHandler();
-            Map<String, Map<String, Boolean>> jsonMap = dataHandler.getData();
+            Map<String, Map<String, List<Object>>> jsonMap = dataHandler.getData();
             
             String titel = titelTextArea.getText(); // Der eingegebene Titel
             boolean titelExists = jsonMap.containsKey(titel); // Überprüft ob der Titel existiert
@@ -165,16 +169,19 @@ public class NewTodo {
                         JOptionPane.ERROR_MESSAGE
                 );
             } else {
-                Map<String, Boolean> tasksMap = new HashMap<>(); // Eine Map für die erstellten Aufgaben
+                Map<String, List<Object>> tasksMap = new HashMap<>(); // Eine Map für die erstellten Aufgaben
+                tasksMap.put("name", new ArrayList<>());
+                tasksMap.put("bool", new ArrayList<>());
                 
                 for (int i = 1; i < tasksPanel.getComponentCount(); i++) {
                     // Die for Schleife fängt bei 1 an, weil das erste Element der Button zum Hinzufügen
                     // neuer Aufgaben ist.
                     // Für jede erstellte Aufgabe wird der Name mit dem false Boolean in die Map eingefügt.
                     // Es wird false benutzt, weil die Aufgabe noch nicht abgeschlossen ist
-                    JPanel das = (JPanel) tasksPanel.getComponent(i);
-                    JTextArea der = (JTextArea) das.getComponent(0);
-                    tasksMap.put(der.getText(), false);
+                    JPanel component = (JPanel) tasksPanel.getComponent(i);
+                    JTextArea textArea = (JTextArea) component.getComponent(0);
+                    tasksMap.get("name").add(textArea.getText());
+                    tasksMap.get("bool").add(false);
                 }
                 
                 // Die neue To-do-Liste wird mit den Aufgaben zu den vorhandenen Dateien hinzugefügt
@@ -184,13 +191,21 @@ public class NewTodo {
                 
                 JOptionPane.showMessageDialog(
                         new JOptionPane(),
-                        "To-Do erfolgreich gespeichert",
+                        titel + " erfolgreich gespeichert",
                         "Speichern",
                         JOptionPane.INFORMATION_MESSAGE
                 ); // Zeigt den Messagedialog das die Daten erfolgreich gespeichert wurden
 
                 // Erstellt eine neue To-do-Liste und aktualisiert das Panel vom Hauptfenster
-                new CreateTaskLabel(getTasksPanel).createJLabel(titel);
+                new CreateTaskLabel(getTasksPanel, mainWindowFrame).createJLabel(titel);
+                int listCount = jsonMap.size();
+                GridLayout layout = (GridLayout) getTasksPanel.getLayout();
+
+                layout.setColumns(Math.min(listCount, 5));
+
+                layout.setRows(0);
+
+                getTasksPanel.setLayout(layout);
                 getTasksPanel.revalidate();
             }
         });

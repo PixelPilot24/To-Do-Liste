@@ -20,7 +20,8 @@ import static java.awt.font.TextAttribute.STRIKETHROUGH_ON;
  * In dieser Klasse wird die GUI für die To-do-Listen mit den Aufgaben erstellt.
  * */
 public class CreateTaskLabel {
-    private final Map<String, Map<String, Boolean>> data;
+    private final JFrame mainWindowFrame;
+    private final Map<String, Map<String, List<Object>>> data;
     private final JPanel panel;
 
     /**
@@ -28,7 +29,8 @@ public class CreateTaskLabel {
      *
      * @param _panel Das {@code JPanel} vom Hauptfenster zum Hinzufügen der To-do-Listen.
      * */
-    public CreateTaskLabel(JPanel _panel) {
+    public CreateTaskLabel(JPanel _panel, JFrame frame) {
+        mainWindowFrame = frame;
         data = new DataHandler().getData();
         panel = _panel;
     }
@@ -48,7 +50,7 @@ public class CreateTaskLabel {
 
         // Erstellt und berechnet die abgeschlossene Prozentzahl
         JLabel percentLabel = new JLabel(getPercent(name), JLabel.RIGHT);
-        percentLabel.setPreferredSize(new Dimension(50,50));
+        percentLabel.setPreferredSize(new Dimension(70,50));
         percentLabel.setFont(font);
 
         // Erstellt Panel für die Überschrift und die Listenelemente
@@ -67,8 +69,7 @@ public class CreateTaskLabel {
         mainPanel.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                // todo
-                System.out.println(name);
+                new ShowTodo(name, panel, mainWindowFrame).run();
             }
 
             @Override
@@ -97,12 +98,13 @@ public class CreateTaskLabel {
     private Container createListItems(String name) {
         Container container = new Container();
         container.setLayout(new GridLayout(5,1));
-        List<String> keysList = new ArrayList<>(data.get(name).keySet());
+        List<Object> taskNames = new ArrayList<>(data.get(name).get("name"));
+        List<Object> taskBools = new ArrayList<>(data.get(name).get("bool"));
 
         // Erstellt die Elemente der To-do-Liste
-        for (int i = 0; i < keysList.size(); i++) {
-            String itemName = keysList.get(i);
-            boolean itemValue = data.get(name).get(itemName);
+        for (int i = 0; i < taskNames.size(); i++) {
+            String itemName = (String) taskNames.get(i);
+            boolean itemValue = (boolean) taskBools.get(i);
             // Erstellt und gestaltet die Aufgabe
             JLabel itemLabel = new JLabel("- " + itemName);
             itemLabel.setBorder(new EmptyBorder(0,10,0,10));
@@ -119,7 +121,7 @@ public class CreateTaskLabel {
 
             // Wenn die To-do-Liste mehr als 5 Elemente hat, dann soll das letzte Element drei Punkte sein.
             // Die Schleife wird danach abgebrochen
-            if (data.get(name).size() > 5 && i == 4) {
+            if (i == 4) {
                 itemLabel.setText("...");
                 itemLabel.setHorizontalAlignment(JLabel.CENTER);
                 itemLabel.setFont(new Font("Serif", Font.BOLD, 16));
@@ -132,7 +134,7 @@ public class CreateTaskLabel {
 
         // Wenn es keine Aufgaben gibt, dann wird ein Label erstellt und dem Container hinzugefügt,
         // damit das Aufgaben-Panel nicht leer ist
-        if (keysList.isEmpty()) {
+        if (taskNames.isEmpty()) {
             JLabel emptyLabel = new JLabel();
             emptyLabel.setPreferredSize(new Dimension(100,22));
             container.add(emptyLabel);
@@ -147,20 +149,22 @@ public class CreateTaskLabel {
      * @param name Der Name der To-do-Liste.
      * @return Gibt die Prozentzahl mit dem Prozentzeichen aus.
      * */
-    private String getPercent(String name) {
+    protected String getPercent(String name) {
         DecimalFormat decimalFormat = new DecimalFormat("0"); // Format für eine ganzzahlige Zahl
         double finished = 0;
         double percent;
-        Map<String, Boolean> innerMap = data.get(name);
+        List<Object> taskBools = new ArrayList<>(data.get(name).get("bool"));
 
         // Wenn eine Aufgabe bereits erledigt ist, wird der finished Wert erhöht
-        for (Boolean value : innerMap.values()) {
-            if (value) {
-                finished ++;
+        for (Object value : taskBools) {
+            boolean newValue = (Boolean) value;
+
+            if (newValue) {
+                finished++;
             }
         }
 
-        percent = finished / data.get(name).size() * 100; // Berechnung der Prozentzahl
+        percent = finished / taskBools.size() * 100; // Berechnung der Prozentzahl
 
         if (Double.isNaN(percent)) {
             // Wenn es keine Aufgaben gibt, dann soll 0 % angezeigt werden
